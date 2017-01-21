@@ -1,0 +1,37 @@
+{
+    "rawList": [
+      ["Male", "0", "Cheap", "Low", "Bus"],
+      ["Male", "1", "Cheap", "Medium", "Bus"],
+      ["Female", "1", "Cheap", "Medium", "Train"],
+      ["Female", "0", "Cheap", "Low", "Bus"],
+      ["Male", "1", "Cheap", "Medium", "Bus"],
+      ["Male", "0", "Standard", "Medium", "Train"],
+      ["Female", "1", "Standard", "Medium", "Train"],
+      ["Female", "1", "Expensive", "High", "Car"],
+      ["Male", "2", "Expensive", "Medium", "Car"],
+      ["Female", "2", "Expensive", "High", "Car"]
+    ],
+    "field": ["Gender", "CarOwner", "TravelCost", "Income", "Transportation"],
+    "listAttribute": [
+      {
+        "Name": "Gender",
+        "Values": ["Male", "Female"]
+      },
+      {
+        "Name": "CarOwner",
+        "Values": ["0", "1", "2"]
+      },
+      {
+        "Name": "TravelCost",
+        "Values": ["Cheap", "Standard", "Expensive"]
+      },
+      {
+        "Name": "Income",
+        "Values": ["Low", "Medium", "High"]
+      }
+    ],
+    "goalAttr": {
+      "Name": "Transportation",
+      "Values": ["Bus", "Train", "Car"]
+    }
+}

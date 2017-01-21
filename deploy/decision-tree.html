@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <link href="./ui/semantic.min.css" rel="stylesheet"/>
+    <link href="./table.css" rel="stylesheet"/>
+    <script src="./angular.min.js"></script>  
+    <script src="./controller.js"></script>
+    <script src="./ui/jquery.min.js" type="text/javascript"></script>
+    <script src="./ui/semantic.min.js" type="text/javascript"></script>
+    <script src="./ui/notify.min.js" type="text/javascript"></script>
+    <meta charset="UTF-8">
+    <title>Decision Tree - HoViNu Team</title>
+
+    <style>
+        .regexor {
+            font-size: 18px !important;
+            height: 600px;
+            line-height: 26px;
+            overflow-y: scroll;
+            white-space: pre-wrap;
+        }
+        .regex {
+            font-weight: normal !important;
+            font-size: 18px !important;
+            padding:2px 0 2px 0!important;
+            border-radius: 0!important;
+            margin: 0!important;
+        }
+    </style>
+
+    <script type="text/javascript">
+        function msg(type, message) {
+            $.notify(
+                message,
+                {
+                    className: type,
+                    position:"bottom center" }
+            );
+        }
+    </script>
+
+    <script src="./decision-tree.js"></script>
+
+    <script>
+      var parseTree;  // define global
+      var dataset;
+      var classifyTree;
+    </script>
+
+    <script src="go.js"></script>
+    <link href="../assets/css/goSamples.css" rel="stylesheet" type="text/css" />  <!-- you don't need to use this -->
+    <link href='https://fonts.googleapis.com/css?family=Droid+Serif:400,700' rel='stylesheet' type='text/css'>
+    <script src="goSamples.js"></script>  <!-- this is only for the GoJS Samples framework -->
+    <script id="code">
+
+      function init() {
+//        if (window.goSamples) goSamples();  // init for these samples -- you don't need to call this
+        var $ = go.GraphObject.make;  // for conciseness in defining templates
+
+        console.log('do init function')
+
+        myDiagram =
+        $(go.Diagram, "myDiagramDiv",  // must be the ID or reference to div
+          {
+            "toolManager.hoverDelay": 100,  // 100 milliseconds instead of the default 850
+            allowCopy: false,
+            layout:  // create a TreeLayout for the family tree
+            $(go.TreeLayout,
+              { angle: 90, nodeSpacing: 70, layerSpacing: 40, layerStyle: go.TreeLayout.LayerUniform })
+          });
+
+        var bluegrad = '#90CAF9';
+        var pinkgrad = '#F48FB1';
+
+        // Set up a Part as a legend, and place it directly on the diagram
+        myDiagram.add(
+          $(go.Part, "Table",
+            { position: new go.Point(500, 10), selectable: false },
+            $(go.TextBlock, "Key",
+              { row: 0, font: "700 14px Droid Serif, sans-serif" }),  // end row 0
+            $(go.Panel, "Horizontal",
+              { row: 1, alignment: go.Spot.Left },
+              $(go.Shape, "Rectangle",
+                { desiredSize: new go.Size(30, 30), fill: bluegrad, margin: 5 }),
+              $(go.TextBlock, "Node",
+                { font: "700 13px Droid Serif, sans-serif" })
+            ),  // end row 1
+            $(go.Panel, "Horizontal",
+              { row: 2, alignment: go.Spot.Left },
+              $(go.Shape, "Rectangle",
+                { desiredSize: new go.Size(30, 30), fill: pinkgrad, margin: 5 }),
+              $(go.TextBlock, "Result",
+                { font: "700 13px Droid Serif, sans-serif" })
+            )  // end row 2
+          ));
+
+        // get tooltip text from the object's data
+        function tooltipTextConverter(person) {
+          var str = "";
+          str += "Born: " + person.birthYear;
+          if (person.deathYear !== undefined) str += "\nDied: " + person.deathYear;
+          if (person.reign !== undefined) str += "\nReign: " + person.reign;
+          return str;
+        }
+
+        // define tooltips for nodes
+        var tooltiptemplate =
+        $(go.Adornment, "Auto",
+          $(go.Shape, "Rectangle",
+            { fill: "whitesmoke", stroke: "black" }),
+          $(go.TextBlock,
+            { font: "bold 8pt Helvetica, bold Arial, sans-serif",
+              wrap: go.TextBlock.WrapFit,
+              margin: 5 },
+            new go.Binding("text", "", tooltipTextConverter))
+        );
+
+        // define Converters to be used for Bindings
+        function colorBrushConverter(color) {
+          if (color === "blue") return bluegrad;
+          if (color === "pink") return pinkgrad;
+          return "orange";
+        }
+
+        // replace the default Node template in the nodeTemplateMap
+        myDiagram.nodeTemplate =
+        $(go.Node, "Auto",
+          { deletable: false, toolTip: tooltiptemplate },
+          new go.Binding("text", "name"),
+          $(go.Shape, "Rectangle",
+            { fill: "lightgray",
+              stroke: null, strokeWidth: 0,
+              stretch: go.GraphObject.Fill,
+              alignment: go.Spot.Center },
+            new go.Binding("fill", "color", colorBrushConverter)),
+          $(go.TextBlock,
+            { font: "700 12px Droid Serif, sans-serif",
+              textAlign: "center",
+              margin: 10, maxSize: new go.Size(80, NaN) },
+            new go.Binding("text", "name"))
+        );
+
+        // define the Link template
+        myDiagram.linkTemplate =
+        $(go.Link,  // the whole link panel
+          { routing: go.Link.Orthogonal, corner: 5, selectable: false },
+          $(go.Shape, { strokeWidth: 3, stroke: '#424242' }));  // the gray link shape
+
+        // here's the family data
+        var nodeDataArray = parseTree;
+
+        // create the model for the family tree
+        myDiagram.model = new go.TreeModel(nodeDataArray);
+
+        document.getElementById('zoomToFit').addEventListener('click', function() {
+          myDiagram.zoomToFit();
+        });
+
+        document.getElementById('centerRoot').addEventListener('click', function() {
+          myDiagram.scale = 1;
+          myDiagram.scrollToRect(myDiagram.findNodeForKey(0).actualBounds);
+        });
+
+      }
+    </script>
+  </head>
+
+  <!-- ;; ================================================================= -->
+
+  <body onload="init()" ng-app="starter" ng-controller="myCtrl">
+    <!--HEADER-->
+    <div class="ui teal inverted menu">
+      <div class="ui container">
+        <a class="active item">
+          Decision Tree
+        </a>
+        <a id="inputData" class="item" ng-click="clearAll()">
+          Nhập số liệu
+        </a>
+        <a id="intro" class="item">
+          Giới thiệu
+        </a>
+
+        <a class="disabled right item">
+          <div class="ui small teal label">HoViNu Team</div>
+        </a>
+
+      </div>
+
+    </div>
+    <div class="ui hidden divider"></div>
+    <!--BODY-->
+    <div class="ui container">
+      <div class="ui stackable grid">
+        <div class="row">
+          <div class="five wide column">
+            <div class="ui attached message">
+              <div class="header">
+                Decision Tree
+              </div>
+            </div>
+            <form class="ui form attached fluid segment">
+              <div class="field">
+                <div class="ui stackable grid">
+                  <div class="row">
+                    <div class="eight wide column">
+                      <label>Kết quả truy vấn</label>
+                    </div>
+                    <div class="eight wide column">
+                      <a class="ui teal label"><span id="matches_count">{{predictResult}}</span> </a>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="eight wide column">
+                      <label>Trạng thái</label>
+                    </div>
+                    <div class="eight wide column">
+                      <a id="status" data-tooltip="{{statusResult.hideMsg}}" data-position="bottom center" class="ui blue label">{{statusResult.showMsg}}</a>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </form>
+            <div class="ui hidden divider"></div>
+
+          </div>
+          <div class="eleven wide column">
+            <div class="ui labeled large fluid input">
+              <div class="ui teal label">
+                Nhập file dataset
+              </div>
+
+              <input type=file id=files />
+
+              <button id="upload" data-tooltip="Thực thi" data-position="right center" class="ui orange circular large icon button">
+                <i class="icon chevron right"></i>
+              </button>
+            </div>
+
+            <div class="ui hidden divider"></div>
+            <div id="myDiagramDiv" tabindex="1" contenteditable="true" class="ui regexor form fluid segment">
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <div class="ui modal" id="inputModel">
+        <div class="header">
+          Nhập điều kiện giả thiết
+        </div>
+        <div class="image content">
+          <div class="description">
+            <div class="property-table">
+
+              <div class="table">
+                <div class="row header">
+                  <div class="cell" ng-repeat="item in listAttribute">
+                    <strong>{{item.Name}}</strong>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="cell" ng-repeat="item in listAttribute">
+
+                    <select ng-model="selectedItem" ng-init="selectedItem = options[0]" ng-options="value for value in item.Values" ng-click="changeSelectedItem(item.Name, selectedItem)" ng-change="changeSelectedItem(item.Name, selectedItem)">
+                      <option value=""></option>                      
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <tt>select = {{selected}}</tt><br/>
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="actions" ng-click="findResult()">
+            <div class="ui positive right labeled icon button">
+              Ok 
+              <i class="checkmark icon"></i>
+            </div>
+          </div>
+
+          <div ng-click="clearAll()">
+            <div class="ui red right labeled icon button">
+              Clear
+              <i class="checkmark icon"></i>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="ui modal">
+        <div class="header">
+          Decision Tree một sản phẩm của team HoViNu
+        </div>
+        <div class="image content">
+          <div class="ui medium image">
+            <img src="ui/decision-tree.jpg">
+          </div>
+          <div class="description">
+            <h3>Giới thiệu:</h3>
+            <p>
+              Decision Tree (Cây định danh) giúp phân loại dữ liệu, tìm ra các tập luật, mô hình hóa và vẽ cấu trúc cây. Ứng dụng nhiều lĩnh vực trong data mining (khai phá dữ liệu).
+              <br>
+              <br>
+              Ứng dụng được xây dựng trên nền tảng web HTML, Javascript. Với sự hỗ trợ bởi một số thư viện về giao diện như GoJS, SemanticUI, AngularJS ...
+            </p>
+
+            <h3>Thành viên:</h3>
+            <p>
+              1. Triệu Tráng Vinh
+              <br>
+              2. Phan Đình Nguyên
+              <br>
+              3. Trịnh Mẫn Hoàng
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <script type="text/javascript">
+        $('document').ready(function () {
+          var isUpdated = false;
+          var regexor = $('.regexor');
+          var btn = $('#enableEditor');
+          var regexp = $('#regexp');
+          function editable(v) {
+
+            if(v){
+              var main = regexor.html().replace(/<div>/gi, '<br>').replace(/<\/div>/gi, '') // replace div wrap by <br>
+                                .replace(/<br(\s*)\/*>/ig, '\n') // replace single line-breaks
+                                .replace(/(<([^>]+)>)/ig, "");   // remove any remaining html tags
+              regexor.html(main.replace(/(?:\r\n|\r|\n)/g, '<br />'));
+              regexor.attr("contenteditable", "true");
+              btn.addClass('disabled');
+              btn.text('Được phép chỉnh sửa');
+            }else{
+              regexor.attr("contenteditable", "false");
+              btn.removeClass('disabled');
+              btn.html('Chỉnh sửa <i class="icon chevron right"></i>');
+            }
+          }
+
+          regexor.bind('keydown', function(event) {
+            if(isUpdated){
+              btn.transition({'animation': 'jiggle', 'queue' :false});
+            }
+          });
+
+          $('#intro').click(function () {
+            $('.ui.modal')
+               .modal('show')
+              ;
+          });
+
+          $('#inputData').click(function () {
+            $('#inputModel')
+                    .modal('show')
+              ;
+          });          
+
+          $('#enableEditor').click(function () {
+            editable(true);
+          });
+
+        });
+
+
+        var fileInput = $('#files');
+        var uploadButton = $('#upload');
+
+        uploadButton.on('click', function() {
+          if (!window.FileReader) {
+            alert('Your browser is not supported')
+          }
+          var input = fileInput.get(0);
+          
+          // Create a reader object
+          var reader = new FileReader();
+          if (input.files.length) {
+            var textFile = input.files[0];
+            reader.readAsText(textFile);
+            $(reader).on('load', processFile);
+          } else {
+            alert('Please upload a file before continuing')
+          } 
+        });
+
+        function processFile(e) {
+          var file = e.target.result,
+              results;
+          if (file && file.length) {
+            results = file;
+            console.log(results);
+            dataset = JSON.parse(results);
+            console.log(JSON.stringify(dataset));
+            var copy = JSON.parse(JSON.stringify(dataset))
+            parseTree = processing(copy);
+
+            // Update the diagram
+            // here's the family data
+            var nodeDataArray = parseTree;
+            // create the model for the family tree
+            myDiagram.model = new go.TreeModel(nodeDataArray);
+
+            // update angular
+            console.log('go where')
+            angular.element(document.body).scope().myfunction(dataset);
+
+          }
+        }
+
+      </script>
+    </div>
+  </body>
+
+</html>

@@ -1,0 +1,35 @@
+{
+    "rawList": [
+      ["Sarah", "Yellow", "Medium", "Light", "Not Use", "Yes"],
+      ["Dana", "Yellow", "Tall", "Medium", "Use", "No"],
+      ["Alex", "Brown", "Short", "Medium", "Use", "No"],
+      ["Annie", "Yellow", "Short", "Medium", "Not Use", "Yes"],
+      ["Emilie", "Red", "Medium", "Heavy", "Not Use", "Yes"],
+      ["Peter", "Brown", "Tall", "Heavy", "Not Use", "No"],
+      ["John", "Brown", "Medium", "Heavy", "Not Use", "No"],
+      ["Kartie", "Yellow", "Short", "Light", "Use", "No"]
+    ],
+    "field": ["Name", "Hair", "Height", "Weight", "Cream", "Liked"],
+    "listAttribute": [
+      {
+        "Name": "Hair",
+        "Values": ["Yellow", "Brown", "Red"]
+      },
+      {
+        "Name": "Height",
+        "Values": ["Tall", "Medium", "Short"]
+      },
+      {
+        "Name": "Weight",
+        "Values": ["Heavy", "Medium", "Light"]
+      },
+      {
+        "Name": "Cream",
+        "Values": ["Use", "Not Use"]
+      }
+    ],
+    "goalAttr": {
+      "Name": "Liked",
+      "Values": ["Yes", "No"]
+    }
+}
